@@ -1,41 +1,79 @@
-# import pygame
+import pygame
 import numpy as np
 
-def add_pieces(color, column):
-    global board,column_free_location
+def add_pieces_player(color, column):
+    global board
+    tempBoard=board.copy()
     
     if not(column) in range(7):
         print("not in range")
-        return False
+        return [False, tempBoard]
         
     if column_free_location[column] < 0:
         print("There is no place in this column")
-        return False
+        return [False, tempBoard]
     else:
-        board[column_free_location[column]][column] = color
+        tempBoard[column_free_location[column]][column] = color
         column_free_location[column] -= 1
-    return True
+    return [True, tempBoard]
+
+def add_pieces_AI(color, column):
+    global board,column_free
+    tempBoard=board.copy()
+        
+    if column_free[column] < 0:
+        return [False, tempBoard]
+    else:
+        tempBoard[column_free[column]][column] = color
+        column_free[column] -= 1
+    return [True, tempBoard]
 
 def game_play():
-    global turnPlayer1 , board
+    global turnPlayer , board, column_free
     do=False
-    if (turnPlayer1):
+    if (turnPlayer):
         while not(do):
-            print("plyer 1 enter piece to the board: ")
-            col= int(input())
-            do= add_pieces (player1, col)
-
-        turnPlayer1=False
-        return winneing(player1)
+            print("plyer enter piece to the board: ")
+            col = int(input())
+            answer = add_pieces_player (player1, col)
+            do = True #answer[0]
+        turnPlayer=False
+        return answer[1]
 
     else:
-        while not(do):
-            print("plyer 2 enter piece to the board: ")
-            col= int(input())
-            do= add_pieces(player2, col)
-  
-        turnPlayer1=True
-        return winneing(player2)
+        column_free = column_free_location.copy
+        print (column_free)
+        miniMaxTree(board,0)
+        # while not(do):
+        #     # print("plyer 2 enter piece to the board: ")
+        #     col= int(input())
+        #     answer = add_pieces_player (player2, col)
+        #     do = answer[0]
+        # turnPlayer=True
+        # return answer[1]
+
+
+def CalculationOfHeuristics(board):
+    return 0
+
+def miniMaxTree(board,i):
+    arr =np.array((0,0,0,0,0,0,0))
+    if(i<5):
+        if(i%2==0):
+            for x in range(7):
+                arr[x]=miniMaxTree(add_pieces_AI(1,x)[1],i+1)
+        else:
+            for x in range(7):
+                arr[x]=miniMaxTree(add_pieces_AI(2,x)[1],i+1)
+    else:
+        return CalculationOfHeuristics(board)
+
+    if(i%2==0):
+        return np.max(arr)
+    else:
+        return np.min(arr)
+    
+
     
 def winneing(player):
    
@@ -67,19 +105,23 @@ ROWS = 6
 COLUMNS = 7
 
 column_free_location = np.array((5, 5, 5, 5, 5, 5, 5))
+column_free = np.array((4, 55, -65, np.inf, 51, np.nan, 5))
+# print(np.nan+8)
+# print(np.min(column_free))
 board = np.zeros((ROWS, COLUMNS))
 player1 = 1
 player2 = 2
 
-turnPlayer1 = True
+turnPlayer = True
 game_over = False
 i=0
+# print(miniMaxTree(board,0))
 while i<42 and not game_over:
     print(board)
     if game_play():
         game_over = True
         print(board)
-        print("player1 win!!!!") if turnPlayer1 else print("player2 win!!!!") 
+        print("player1 win!!!!") if turnPlayer else print("player2 win!!!!") 
     i+=1
 
 if i == 42:
