@@ -1,21 +1,22 @@
 import pygame
 import numpy as np
 
-def add_pieces_player(color, column):
-    global board
-    tempBoard=board.copy()
+def add_pieces(color, column):
+    global board,column_free_location
     
     if not(column) in range(7):
         print("not in range")
-        return [False, tempBoard]
+        return False
         
     if column_free_location[column] < 0:
         print("There is no place in this column")
-        return [False, tempBoard]
+        return False
     else:
-        tempBoard[column_free_location[column]][column] = color
+        board[column_free_location[column]][column] = color
         column_free_location[column] -= 1
-    return [True, tempBoard]
+    return True
+
+
 
 def add_pieces_AI(color, column):
     global board,column_free
@@ -33,17 +34,19 @@ def game_play():
     do=False
     if (turnPlayer):
         while not(do):
-            print("plyer enter piece to the board: ")
-            col = int(input())
-            answer = add_pieces_player (player1, col)
-            do = True #answer[0]
+            print("plyer 1 enter piece to the board: ")
+            col= int(input())
+            do= add_pieces (player1, col)
+
         turnPlayer=False
-        return answer[1]
+        return winneing(player1)
 
     else:
-        column_free = column_free_location.copy
-        print (column_free)
+        column_free = column_free_location.copy()
+        print(column_free)
         miniMaxTree(board,0)
+        turnPlayer=True
+        return winneing(player2)
         # while not(do):
         #     # print("plyer 2 enter piece to the board: ")
         #     col= int(input())
@@ -57,15 +60,18 @@ def CalculationOfHeuristics(board):
     return 0
 
 def miniMaxTree(board,i):
+    global column_free, column_free_location
     arr =np.array((0,0,0,0,0,0,0))
     if(i<5):
         if(i%2==0):
             for x in range(7):
-                arr[x]=miniMaxTree(add_pieces_AI(1,x)[1],i+1)
+                arr[x]=miniMaxTree(add_pieces_AI(1,x)[1].copy(),i+1)
         else:
             for x in range(7):
                 arr[x]=miniMaxTree(add_pieces_AI(2,x)[1],i+1)
     else:
+        print(board)
+        column_free = column_free_location.copy()
         return CalculationOfHeuristics(board)
 
     if(i%2==0):
