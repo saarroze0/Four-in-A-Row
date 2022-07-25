@@ -1,3 +1,4 @@
+from re import T
 import pygame
 import numpy as np
 
@@ -18,19 +19,19 @@ def add_pieces(color, column):
 
 
 
-def add_pieces_AI(color, column):
-    global board,column_free
-    tempBoard=board.copy()
+def add_pieces_AI(tempBoard, color, column):
+    # global board,column_free
+    # board=tempBoard.copy()
         
     if column_free[column] < 0:
-        return [False, tempBoard]
+        return tempBoard
     else:
         tempBoard[column_free[column]][column] = color
         column_free[column] -= 1
-    return [True, tempBoard]
+    return board
 
 def game_play():
-    global turnPlayer , board, column_free
+    global turnPlayer , board, column_free_location
     do=False
     if (turnPlayer):
         while not(do):
@@ -39,49 +40,119 @@ def game_play():
             do= add_pieces (player1, col)
 
         turnPlayer=False
-        return winneing(player1)
+        return winneing(board,player1)
 
     else:
-        column_free = column_free_location.copy()
-        print(column_free)
-        miniMaxTree(board,0)
+        temp_board = board.copy()
+        temp_column_free = column_free_location.copy()
+        col = miniMaxTree(temp_board, temp_column_free, 5, np.inf, -np.inf, 2)
+        
+        # print(column_free)
+        add_pieces (player2, col)
         turnPlayer=True
-        return winneing(player2)
+        return winneing(board,player2)
         # while not(do):
-        #     # print("plyer 2 enter piece to the board: ")
+        #     print("plyer 2 enter piece to the board: ")
         #     col= int(input())
-        #     answer = add_pieces_player (player2, col)
-        #     do = answer[0]
+        #     do= add_pieces (player2, col)
+
         # turnPlayer=True
-        # return answer[1]
+        # return winneing(board,player2)
 
+def positionScore (arr,player):
+    if ((player1 in arr and player2 in arr )or (arr.count(0)==4)):
+        return 0
 
-def CalculationOfHeuristics(board):
-    return 0
-
-def miniMaxTree(board,i):
-    global column_free, column_free_location
-    arr =np.array((0,0,0,0,0,0,0))
-    if(i<5):
-        if(i%2==0):
-            for x in range(7):
-                arr[x]=miniMaxTree(add_pieces_AI(1,x)[1].copy(),i+1)
-        else:
-            for x in range(7):
-                arr[x]=miniMaxTree(add_pieces_AI(2,x)[1],i+1)
+    num = 4-arr.count(0)
+    match num:
+        case 1:
+            score=1
+        case 2:
+            score=5
+        case 3:
+            score=10
+        case 4:
+            score=100
+    
+    if (player in arr):
+        return score
     else:
-        print(board)
-        column_free = column_free_location.copy()
-        return CalculationOfHeuristics(board)
-
-    if(i%2==0):
-        return np.max(arr)
-    else:
-        return np.min(arr)
+        return score * -1
     
 
+def CalculationOfHeuristics(board,player):
+    heuristics = 0
+    arr =[0,0,0,0]
+    #vertical
+    for c in range(COLUMNS):
+        for r in range(ROWS -3):
+            arr[0]=board[r][c]
+            arr[1]=board[r+1][c]
+            arr[2]=board[r+2][c]
+            arr[3]=board[r+3][c]
+            heuristics += positionScore(arr,player)
+
+    #diagonal 
+    for c in range(COLUMNS -3):
+        for r in range(ROWS -3):
+            arr[0]=board[r][c]
+            arr[1]=board[r+1][c+1]
+            arr[2]=board[r+2][c+2]
+            arr[3]=board[r+3][c+3]
+            heuristics += positionScore(arr,player)
+
+    for c in range(COLUMNS-3):
+        for r in range(3,ROWS):
+            arr[0]=board[r][c]
+            arr[1]=board[r-1][c+1]
+            arr[2]=board[r-2][c+2]
+            arr[3]=board[r-3][c+3]
+            heuristics += positionScore(arr,player)
+         
+    #horizontal
+    for c in range(COLUMNS-3):
+        for r in range(ROWS):
+            arr[0]=board[r][c]
+            arr[1]=board[r][c+1]
+            arr[2]=board[r][c+2]
+            arr[3]=board[r][c+3]
+            heuristics += positionScore(arr,player)
+
+
+    return heuristics
+
+def column_free_f(arr):
+    temp =[]
+    for i in range(7):
+        if arr[i]>=0:
+            temp.append(i)
+    return temp
+
+def is_terminal_node(board, column_free_location):
+	return winneing(board, player1) or winneing(board, player2) or len(column_free_f(column_free_location)) == 0
+
+
+def miniMaxTree(board,column_free_location,depth,a,b,player):
+    column_free1= column_free_f(column_free_location)
+    is_terminal = is_terminal_node(board, column_free_location)
+    print(is_terminal) 
+    if (depth == 0 or is_terminal):
+	    if (is_terminal):
+			if winneing(board, player2):
+				return (None, 100000000000000)
+			elif winneing(board, player1):
+				return (None, -10000000000000)
+			else: # Game is over, no more valid moves
+				return (None, 0)
+		else: # Depth is zero
+			return (None, CalculationOfHeuristics(board, player2))
+        
+        if player==player2:
+            return 0
     
-def winneing(player):
+    
+    
+def winneing(board,player):
    
     #vertical
     for c in range(COLUMNS):
@@ -111,17 +182,25 @@ ROWS = 6
 COLUMNS = 7
 
 column_free_location = np.array((5, 5, 5, 5, 5, 5, 5))
-column_free = np.array((4, 55, -65, np.inf, 51, np.nan, 5))
-# print(np.nan+8)
-# print(np.min(column_free))
+# ?olumn_free = np.array((4, 55, -65, np.inf, 51, np.nan, 5))
+
 board = np.zeros((ROWS, COLUMNS))
 player1 = 1
 player2 = 2
+# board[5][0]= 1
+# board[3][2]= 0
+# board[4][3]= 0
+# board[4][2]= 0
+# board[5][2]= 1
+# board[5][3]= 2
+# print(board)
+# print( CalculationOfHeuristics(board,2))
+
 
 turnPlayer = True
 game_over = False
 i=0
-# print(miniMaxTree(board,0))
+#print(miniMaxTree(board,0))
 while i<42 and not game_over:
     print(board)
     if game_play():
