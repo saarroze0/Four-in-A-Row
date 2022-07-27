@@ -1,3 +1,6 @@
+from ast import Return
+import math
+import random
 from re import T
 import pygame
 import numpy as np
@@ -19,16 +22,16 @@ def add_pieces(color, column):
 
 
 
-def add_pieces_AI(tempBoard, color, column):
-    # global board,column_free
-    # board=tempBoard.copy()
+# def add_pieces_AI(tempBoard, color, column):
+#     # global board,column_free
+#     # board=tempBoard.copy()
         
-    if column_free[column] < 0:
-        return tempBoard
-    else:
-        tempBoard[column_free[column]][column] = color
-        column_free[column] -= 1
-    return board
+#     if column_free[column] < 0:
+#         return tempBoard
+#     else:
+#         tempBoard[column_free[column]][column] = color
+#         column_free[column] -= 1
+#     return board
 
 def game_play():
     global turnPlayer , board, column_free_location
@@ -45,7 +48,7 @@ def game_play():
     else:
         temp_board = board.copy()
         temp_column_free = column_free_location.copy()
-        col = miniMaxTree(temp_board, temp_column_free, 5, np.inf, -np.inf, 2)
+        col = miniMaxTree(temp_board, temp_column_free, 5, -np.inf, np.inf)[0]
         
         # print(column_free)
         add_pieces (player2, col)
@@ -79,7 +82,6 @@ def positionScore (arr,player):
     else:
         return score * -1
     
-
 def CalculationOfHeuristics(board,player):
     heuristics = 0
     arr =[0,0,0,0]
@@ -132,23 +134,53 @@ def is_terminal_node(board, column_free_location):
 	return winneing(board, player1) or winneing(board, player2) or len(column_free_f(column_free_location)) == 0
 
 
-def miniMaxTree(board,column_free_location,depth,a,b,player):
+def miniMaxTree(board,column_free_location,depth,a,b):
     column_free1= column_free_f(column_free_location)
     is_terminal = is_terminal_node(board, column_free_location)
     print(is_terminal) 
-    if (depth == 0 or is_terminal):
-	    if (is_terminal):
-			if winneing(board, player2):
-				return (None, 100000000000000)
-			elif winneing(board, player1):
-				return (None, -10000000000000)
-			else: # Game is over, no more valid moves
-				return (None, 0)
-		else: # Depth is zero
-			return (None, CalculationOfHeuristics(board, player2))
-        
-        if player==player2:
-            return 0
+    if depth == 0 or is_terminal:
+        if is_terminal:
+            if winneing(board, player2):
+                return (None, 1000000)
+            elif winneing(board, player1):
+                return (None, -1000000)
+            else:
+                print(board)
+                return (None,CalculationOfHeuristics(board,player2))
+    if depth%2==1:
+        temp_board=board.copy()
+        temp_column_free_location=column_free_location.copy()
+        value = -math.inf
+        column = random.choice(column_free1)
+        for col in column_free1:
+            row= temp_column_free_location[col]
+            temp_column_free_location[col] -= 1
+            temp_board[row][col] = player2
+            new_score = miniMaxTree(temp_board, temp_column_free_location, depth-1, a, b)[1]
+            if new_score>= value:
+                value= new_score
+                column=col
+            a=max(a, value)
+            if a>=b:
+                break
+        return column, value
+    else:
+        temp_board=board.copy()
+        temp_column_free_location=column_free_location.copy()
+        value = math.inf
+        column = random.choice(column_free1)
+        for col in column_free1:
+            row= temp_column_free_location[col]
+            temp_column_free_location[col] -= 1
+            temp_board[row][col] = player2
+            new_score = miniMaxTree(temp_board, temp_column_free_location, depth-1, a, b)[1]
+            if new_score>= value:
+                value= new_score
+                column=col
+            b=min(a, value)
+            if a>=b:
+                break
+        return column, value
     
     
     
