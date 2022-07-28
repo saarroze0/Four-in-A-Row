@@ -24,10 +24,17 @@ def add_pieces(color, column):
 def game_play():
     global turnPlayer , board, column_free_location
     do=False
+    inPut= True
     if (turnPlayer):
         while not(do):
-            print("plyer 1 enter piece to the board: ")
-            col= int(input())
+            print("player 1 enter piece to the board: ")
+            while inPut:
+                try:
+                    col= int(input())
+                    inPut =False
+                except:
+                    print ("wrong input!! enter a number")
+
             do= add_pieces (player1, col)
 
         turnPlayer=False
